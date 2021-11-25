@@ -27,7 +27,7 @@ h1, h2, h3, h4 { font-weight: 400; }
   /* Fade out while not hovering */
   opacity: 0.55;
   zoom: 0.9;
-  transition: opacity 100ms 1s;
+  transition: opacity 100ms;
 }
 
 #controls:hover {
@@ -43,7 +43,7 @@ h1, h2, h3, h4 { font-weight: 400; }
   /* Fade out while not hovering */
   opacity: 0.85;
   zoom: 0.9;
-  transition: opacity 200ms 1s;
+  transition: opacity 100ms;
 }
 
 #logo:hover {
