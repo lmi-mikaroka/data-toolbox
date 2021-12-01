@@ -92,13 +92,6 @@ ui <- fluidPage(
                                           label = "Reset WKT",
                                           icon("sync"), 
                                           style="color: #fff; background-color: #63B061; border-color: #2e6da4"),
-                                        # selectInput(
-                                        #   inputId = "depth",
-                                        #   label = "Depth",
-                                        #   choices = target_depth$depth,
-                                        #   multiple = TRUE,
-                                        #   selected= default_depth
-                                        # ),
                                         tags$br(),
                                         tags$br()
                           ),
