@@ -28,7 +28,7 @@ local_wkt <- 'POLYGON ((31.11328 -31.50363, 31.11328 -3.162456, 71.01562 -3.1624
 wkt <- reactiveVal(local_wkt) 
 
 default_year <- NULL
-target_year <- data_dwc %>% distinct(year)
+target_year <- data_dwc %>% distinct(year) %>% arrange(desc(year))
 
 # default_species <- c('Elagatis bipinnulata (Quoy & Gaimard, 1825)','Coryphaena hippurus Linnaeus, 1758')
 default_species <- NULL
@@ -90,7 +90,6 @@ ui <- fluidPage(
                                           multiple = TRUE,
                                           selected= default_species
                                         ),
-                                        
                                         textInput(
                                           inputId="polygon",
                                           label="Edit WKT",
@@ -199,15 +198,11 @@ server <- function(input, output, session) {
     updateTextInput(session, "polygon", value = wkt())
   })
   
-  # observeEvent(input$resetAllFilters, {
-  #   updateSelectInput(session,"year",choices = default_year)
-  # },
-  # ignoreInit = TRUE)
-  
   observeEvent(input$resetAllFilters, {
-    updateSelectInput(session,"year",choices = target_year, selected = NULL )
-    updateSelectInput(session,"family",choices = target_family, selected = NULL )
-    updateSelectInput(session,"species",choices = target_species, selected = NULL )
+    updateTextInput(session, "polygon", value = wkt())
+    updateSelectInput(session,"year",choices = target_year$year, selected = NULL )
+    updateSelectInput(session,"family",choices = target_family$family, selected = NULL )
+    updateSelectInput(session,"species",choices = target_species$scientificName, selected = NULL )
   },
   ignoreInit = TRUE)
   
