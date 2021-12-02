@@ -38,7 +38,7 @@ target_species <- data_dwc %>% distinct(scientificName)
 default_family <- NULL
 target_family <- data_dwc %>% distinct(family)
 
-default_depth = NULL
+default_depth <- NULL
 target_depth <- data_dwc %>% distinct(depth)
 
 filters_combinations <- data_dwc %>% st_drop_geometry()  %>% distinct(family, scientificName)
@@ -100,7 +100,14 @@ ui <- fluidPage(
                                           inputId = "resetWkt",
                                           label = "Reset WKT",
                                           icon("sync"), 
-                                          style="color: #fff; background-color: #63B061; border-color: #2e6da4"),
+                                          style="color: #fff; background-color: #63B061; border-color: #2e6da4"
+                                          ),
+                                        actionButton(
+                                          inputId = "resetAllFilters",
+                                          label = "Reset all filters",
+                                          icon("sync"), 
+                                          style="color: #fff; background-color: #63C5DA; border-color: #2e6da4"
+                                          ),
                                         # selectInput(
                                         #   inputId = "depth",
                                         #   label = "Depth",
@@ -177,7 +184,7 @@ server <- function(input, output, session) {
   
   
   observeEvent(input$family,{
-    temp <- filters_combinations %>% filter(family %in% change()[1])
+    temp <- filters_combinations %>% filter(family %in% change()[])
     updateSelectInput(session,"species",choices = unique(temp$scientificName))
   }
   )
@@ -188,10 +195,21 @@ server <- function(input, output, session) {
   },
   ignoreInit = TRUE)
   
-  
   observe({
     updateTextInput(session, "polygon", value = wkt())
   })
+  
+  # observeEvent(input$resetAllFilters, {
+  #   updateSelectInput(session,"year",choices = default_year)
+  # },
+  # ignoreInit = TRUE)
+  
+  observeEvent(input$resetAllFilters, {
+    updateSelectInput(session,"year",choices = target_year, selected = NULL )
+    updateSelectInput(session,"family",choices = target_family, selected = NULL )
+    updateSelectInput(session,"species",choices = target_species, selected = NULL )
+  },
+  ignoreInit = TRUE)
   
   data <- eventReactive(input$submit, {
     if(is.null(input$species)){filter_species=target_species$scientificName}else{filter_species=input$species}
@@ -233,8 +251,8 @@ server <- function(input, output, session) {
     mymap <-leaflet(data=df,options = leafletOptions(minZoom = 1, maxZoom = 40)) %>% 
       clearPopups()  %>% 
       # https://leaflet-extras.github.io/leaflet-providers/preview/ 
-      addProviderTiles("Esri.OceanBasemap") %>%
-      addProviderTiles("Esri.WorldImagery") %>% 
+      addProviderTiles("Esri.OceanBasemap", group = "ESRI") %>%
+      addProviderTiles("Esri.WorldImagery", group = "ESRI2") %>% 
       clearBounds() %>%
       addMarkers(~as_tibble(st_coordinates(geometry))$X,~as_tibble(st_coordinates(geometry))$Y,
                  popup = ~as.character(scientificName),
@@ -252,9 +270,11 @@ server <- function(input, output, session) {
         )
       ) %>%
       addLayersControl(
+        baseGroups = c("ESRI", "ESRI2"),
         overlayGroups = c("draw"),
-        options = layersControlOptions(collapsed = FALSE)
-      )  
+        options = layersControlOptions(collapsed = FALSE),
+        position = "bottomright"
+      )
       # mymap
   })
   
