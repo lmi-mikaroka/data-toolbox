@@ -9,7 +9,7 @@ library(sf)
 library(geojsonio)
 library(DT)
 library(plotly)
-####################################################################################################################################################################################################################################
+############################################################ DATA and FILTER ########################################################################################################################################################################
 # setwd("~/Desktop/CODES/MIKAROKA/")
 if(!file.exists("dwc.rds")){
   githubURL <- ("https://raw.githubusercontent.com/juldebar/MIKAROKA/master/data/dwc.rds")
@@ -30,23 +30,25 @@ wkt <- reactiveVal(local_wkt)
 default_year <- NULL
 target_year <- data_dwc %>% distinct(year)
 
-# default_species <- 'Acropora hyacinthus (Dana, 1846)'
+# default_species <- c('Elagatis bipinnulata (Quoy & Gaimard, 1825)','Coryphaena hippurus Linnaeus, 1758')
 default_species <- NULL
 target_species <- data_dwc %>% distinct(scientificName)
 
-# default_family <- c("Acroporidae","Dendrophylliidae","Merulinidae", "Agariciidae","Pocilloporidae")
+# default_family <- c("Coryphaenidae","Carangidae","Scombridae", "Carcharhinidae","Istiophoridae")
 default_family <- NULL
 target_family <- data_dwc %>% distinct(family)
 
 default_depth = NULL
 target_depth <- data_dwc %>% distinct(depth)
 
-####################################################################################################################################################################################################################################
+filters_combinations <- data_dwc %>% st_drop_geometry()  %>% distinct(family, scientificName)
+
+################################################################ USER INTERFACE ###################################################################################################################################################
 
 ui <- fluidPage(
   # titlePanel("Species occurences viewer: map and plots"),
-  navbarPage(title="Data viewer for LMI MIKAROKA datasets",
-             tabPanel("Occurences viewer",
+  navbarPage(title="Data viewer for Darwin Core data format",
+             tabPanel("Species occurences viewer",
                       div(class="outer",
                           # tags$head(includeCSS("styles.css")),
                           tags$head(includeCSS("https://raw.githubusercontent.com/juldebar/MIKAROKA/main/styles.css")),
@@ -60,7 +62,7 @@ ui <- fluidPage(
                                         tags$br(),
                                         actionButton(
                                           inputId = "submit",
-                                          label = "Get the data",
+                                          label = "Display data",
                                           # icon = icon("refresh"),
                                           icon("play-circle"), 
                                           style="color: #fff; background-color: #F51D08; border-color: #2e6da4"
@@ -83,7 +85,7 @@ ui <- fluidPage(
                                         ),
                                         selectInput(
                                           inputId = "species",
-                                          label = "Species",
+                                          label = "Scientific Name",
                                           choices = target_species$scientificName,
                                           multiple = TRUE,
                                           selected= default_species
@@ -114,6 +116,7 @@ ui <- fluidPage(
                                         top = "15%", right = "auto", left ="73%", width = "25%", fixed=TRUE,
                                         draggable = TRUE, height = "auto",
                                         tags$br(),
+                                        tags$br(),
                                         plotlyOutput("pie_map", height ="100%"),
                                         ),
                           absolutePanel(id = "logo", class = "card", bottom = "4%", left = "2%", width = "5%", fixed=TRUE, draggable = FALSE, height = "auto",
@@ -122,14 +125,10 @@ ui <- fluidPage(
                           
                       )
              ),
-             tabPanel("Data within WKT overview",
+             tabPanel("Explore current data table",
                       hr(),
                       DT::dataTableOutput("DT_within_WKT")
                       # downloadButton("downloadCsv", "Download as CSV"),tags$br(),tags$br(),
-             ),
-             tabPanel(
-               title = "Current WKT polygon",
-               textOutput("WKT")
              ),
              navbarMenu("More",
                          tabPanel("About",
@@ -158,14 +157,31 @@ ui <- fluidPage(
                                    )
                                    
                                  )
+                        ),
+                        tabPanel(
+                          title = "Current WKT polygon",
+                          textOutput("WKT")
                         )
              )
   )
 )
 
-####################################################  SERVER #################################################################################################"
+################################################################ SERVER ###################################################################################################################################################
 
 server <- function(input, output, session) {
+  
+  
+  change <- reactive({
+    unlist(strsplit(paste(input$family,collapse="|"),"|",fixed=TRUE))
+  })
+  
+  
+  observeEvent(input$family,{
+    temp <- filters_combinations %>% filter(family %in% change()[1])
+    updateSelectInput(session,"species",choices = unique(temp$scientificName))
+  }
+  )
+  
   
   observeEvent(input$resetWkt, {
     wkt(local_wkt)
@@ -183,10 +199,10 @@ server <- function(input, output, session) {
     if(is.null(input$year)){filter_year=target_year$year}else{filter_year=input$year}
     # if(is.null(input$depth)){filter_depth=target_depth$depth}else{filter_depth=input$depth}
     data_dwc %>% 
-        filter(year %in% filter_year) %>%
-        filter(family %in% filter_family) %>% 
+      filter(year %in% filter_year) %>%
+      filter(family %in% filter_family) %>% 
       filter(scientificName %in% filter_species) %>%
-      # filter(depth %in% filter_depth) %>%
+      # filter(depth %in% filter_depth) %>% 
       dplyr::filter(st_within(.,st_as_sfc(input$polygon, crs = 4326), sparse = FALSE)) # %>% head(500)
 
         },ignoreNULL = FALSE)
@@ -204,6 +220,13 @@ server <- function(input, output, session) {
     
     
   output$mymap <- renderLeaflet({
+    
+    shiny::validate(
+      need(nrow(data())>0, 'Sorry no data with current filters !'),
+      errorClass = "myClass"
+      
+    )
+    
     # df <- data_dwc %>%  filter(st_within(geometry,st_as_sfc(local_wkt, crs = 4326),sparse = FALSE)[, 1]) 
     df <- data()  
     
@@ -270,7 +293,13 @@ server <- function(input, output, session) {
   
   output$pie_map <- renderPlotly({
     
-    pie_data <- data()  %>% st_drop_geometry() %>% group_by(family) %>% summarise(count = n_distinct(gbifID)) %>% arrange(count) %>% top_n(5)
+    shiny::validate(
+      need(nrow(data())>0, 'Sorry no data with current filters !'),
+      errorClass = "myClass"
+      
+    )
+    
+    pie_data <- data()  %>% st_drop_geometry() %>% group_by(family) %>% summarise(count = n_distinct(gbifID)) %>% arrange(count) # %>% top_n(10)
     
     fig <- plot_ly(pie_data, labels = ~family, values = ~count, type = 'pie', width = 350, height = 500,
                    marker = list( line = list(color = '#FFFFFF', width = 1), sort = FALSE),
