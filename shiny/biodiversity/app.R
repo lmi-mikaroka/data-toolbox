@@ -10,8 +10,9 @@ library(geojsonio)
 library(DT)
 library(plotly)
 ############################################################ DATA and FILTER ########################################################################################################################################################################
-geofia <- as_tibble(read.csv("/home/julien/Desktop/MLD_mada_2021/Boulot/biodiversity/data/BDD_geofia.csv",sep=";"))
-barycentre_db_peche <- as_tibble(read.csv("/home/julien/Desktop/MLD_mada_2021/Boulot/biodiversity/data/data-1638265454220.csv"))
+data_wd <- "/home/julien/Desktop/MIKAROKA/MLD_mada_2021/Boulot/biodiversity/data/"
+geofia <- as_tibble(read.csv(paste0(data_wd, "BDD_geofia.csv"),sep=";"))
+barycentre_db_peche <- read.csv(paste0(data_wd, "data-1638265454220.csv"))
 biodiversity_data <- geofia %>% right_join(barycentre_db_peche,by="num_fiche") %>% 
   rename(gbifID=num_fiche,decimalLatitude=lat,decimalLongitude=lon,eventDate=date_echg,year=date_echg,family=FAMILLE, scientificName=Genus_species) %>% 
     st_as_sf(.,coords=c("decimalLongitude","decimalLatitude"),crs=4326)
@@ -34,6 +35,18 @@ target_species <- data_dwc %>% distinct(scientificName)
 default_family <- NULL
 target_family <- data_dwc %>% distinct(family)
 
+default_fisherman <- NULL
+target_fisherman <- data_dwc %>% distinct(code_pecheur)
+
+default_gear <- NULL
+target_gear <- data_dwc %>% distinct(code_engin)
+
+
+default_village <- NULL
+target_village <- data_dwc %>% distinct(code_village)
+
+
+filters_combinations <- data_dwc %>% st_drop_geometry()  %>% distinct(family, scientificName)
 ################################################################ USER INTERFACE ###################################################################################################################################################
 
 ui <- fluidPage(
@@ -41,8 +54,8 @@ ui <- fluidPage(
   navbarPage(title="Data viewer for Darwin Core data format",
              tabPanel("Species occurences viewer",
                       div(class="outer",
-                          # tags$head(includeCSS("styles.css")),
-                          tags$head(includeCSS("https://raw.githubusercontent.com/juldebar/MIKAROKA/main/styles.css")),
+                          tags$head(includeCSS("../../styles.css")),
+                          # tags$head(includeCSS("https://raw.githubusercontent.com/juldebar/MIKAROKA/main/styles.css")),
                           leafletOutput("mymap", width="100%", height="100%"),
                           
                           # Shiny versions prior to 0.11 should use class = "modal" instead.
@@ -81,7 +94,27 @@ ui <- fluidPage(
                                           multiple = TRUE,
                                           selected= default_species
                                         ),
-                                        
+                                        # selectInput(
+                                        #   inputId = "fisherman",
+                                        #   label = "Fisherman",
+                                        #   choices = target_fisherman$code_pecheur,
+                                        #   multiple = TRUE,
+                                        #   selected= default_fisherman
+                                        # ),
+                                        selectInput(
+                                          inputId = "gear",
+                                          label = "Fishing gear",
+                                          choices = target_gear$code_engin,
+                                          multiple = TRUE,
+                                          selected= default_gear
+                                        ),
+                                        selectInput(
+                                          inputId = "village",
+                                          label = "Village",
+                                          choices = target_village$code_village,
+                                          multiple = TRUE,
+                                          selected= default_village
+                                        ),
                                         textInput(
                                           inputId="polygon",
                                           label="Edit WKT",
@@ -91,7 +124,14 @@ ui <- fluidPage(
                                           inputId = "resetWkt",
                                           label = "Reset WKT",
                                           icon("sync"), 
-                                          style="color: #fff; background-color: #63B061; border-color: #2e6da4"),
+                                          style="color: #fff; background-color: #63B061; border-color: #2e6da4"
+                                          ),
+                                        actionButton(
+                                          inputId = "resetAllFilters",
+                                          label = "Reset all filters",
+                                          icon("sync"), 
+                                          style="color: #fff; background-color: #63C5DA; border-color: #2e6da4"
+                                        ),
                                         tags$br(),
                                         tags$br()
                           ),
@@ -168,17 +208,41 @@ server <- function(input, output, session) {
     if(is.null(input$species)){filter_species=target_species$scientificName}else{filter_species=input$species}
     if(is.null(input$family)){filter_family=target_family$family}else{filter_family=input$family}
     if(is.null(input$year)){filter_year=target_year$year}else{filter_year=input$year}
-    # if(is.null(input$depth)){filter_depth=target_depth$depth}else{filter_depth=input$depth}
+    if(is.null(input$village)){filter_village=target_village$code_village}else{filter_village=input$village}
+    # if(is.null(input$fisherman)){filter_fisherman=target_fisherman$code_pecheur}else{filter_fisherman=input$fisherman}
+    if(is.null(input$gear)){filter_gear=target_gear$code_engin}else{filter_gear=input$gear}
     data_dwc %>% 
+      dplyr::filter(st_within(.,st_as_sfc(input$polygon, crs = 4326), sparse = FALSE)) %>%
       filter(year %in% filter_year) %>%
       filter(family %in% filter_family) %>% 
       filter(scientificName %in% filter_species) %>%
-      # filter(depth %in% filter_depth) %>% 
-      dplyr::filter(st_within(.,st_as_sfc(input$polygon, crs = 4326), sparse = FALSE)) # %>% head(500)
+      filter(code_village %in% filter_village) %>%
+      filter(code_engin %in% filter_gear) #%>%
+      # filter(code_pecheur %in% filter_fisherman)  %>%
+      # dplyr::filter(st_within(.,st_as_sfc(input$polygon, crs = 4326), sparse = FALSE)) # %>% head(500)
     
   },ignoreNULL = FALSE)
   
   ############################################################# OUTPUTS   ############################################################# 
+  
+  change <- reactive({
+    unlist(strsplit(paste(input$family,collapse="|"),"|",fixed=TRUE))
+  })
+  
+  
+  observeEvent(input$family,{
+    temp <- filters_combinations %>% filter(family %in% change()[])
+    updateSelectInput(session,"species",choices = unique(temp$scientificName))
+  }
+  )
+  
+  observeEvent(input$resetAllFilters, {
+    updateTextInput(session, "polygon", value = wkt())
+    updateSelectInput(session,"year",choices = target_year$year, selected = NULL )
+    updateSelectInput(session,"family",choices = target_family$family, selected = NULL )
+    updateSelectInput(session,"species",choices = target_species$scientificName, selected = NULL )
+  },
+  ignoreInit = TRUE)
   
   
   output$DT_within_WKT <- renderDT({
@@ -192,13 +256,19 @@ server <- function(input, output, session) {
   
   output$mymap <- renderLeaflet({
     # df <- data_dwc %>%  filter(st_within(geometry,st_as_sfc(local_wkt, crs = 4326),sparse = FALSE)[, 1]) 
+    
+    shiny::validate(
+      need(nrow(data())>0, 'Sorry no data left to fit the current filters !'),
+      errorClass = "myClass"
+    )
+    
     df <- data()  
     
     mymap <-leaflet(data=df,options = leafletOptions(minZoom = 1, maxZoom = 40)) %>% 
       clearPopups()  %>% 
       # https://leaflet-extras.github.io/leaflet-providers/preview/ 
-      addProviderTiles("Esri.OceanBasemap") %>%
-      addProviderTiles("Esri.WorldImagery") %>% 
+      addProviderTiles("Esri.WorldImagery", group = "ESRI") %>%
+      addProviderTiles("Esri.OceanBasemap", group = "ESRI2") %>% 
       clearBounds() %>%
       addMarkers(~as_tibble(st_coordinates(geometry))$X,~as_tibble(st_coordinates(geometry))$Y,
                  popup = ~as.character(scientificName),
@@ -216,9 +286,11 @@ server <- function(input, output, session) {
         )
       ) %>%
       addLayersControl(
+        baseGroups = c("ESRI", "ESRI2"),
         overlayGroups = c("draw"),
-        options = layersControlOptions(collapsed = FALSE)
-      )  
+        options = layersControlOptions(collapsed = FALSE),
+        position = "bottomright"
+      )
     # mymap
   })
   
@@ -256,6 +328,12 @@ server <- function(input, output, session) {
   
   
   output$pie_map <- renderPlotly({
+    
+    shiny::validate(
+      need(nrow(data())>0, 'Sorry no data with current filters !'),
+      errorClass = "myClass"
+      
+    )
     
     pie_data <- data()  %>% st_drop_geometry() %>% group_by(family) %>% summarise(count = n_distinct(gbifID)) %>% arrange(count) # %>% top_n(10)
     
