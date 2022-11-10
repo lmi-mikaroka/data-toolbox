@@ -24,7 +24,7 @@ if(!file.exists("dwc.rds")){
 }
 
 # Set default values for filters to be displayed by UI and used by server to filter and process data
-local_wkt <- 'POLYGON ((31.11328 -31.50363, 31.11328 -3.162456, 71.01562 -3.162456, 71.01562 -31.50363, 31.11328 -31.50363))'
+local_wkt <- 'POLYGON ((24.43359 -42.29356, 24.43359 26.27371, 127.6172 26.27371, 127.6172 -42.29356, 24.43359 -42.29356))'
 wkt <- reactiveVal(local_wkt) 
 
 default_year <- NULL
@@ -263,10 +263,16 @@ server <- function(input, output, session) {
         editOptions = editToolbarOptions(
           selectedPathOptions = selectedPathOptions()
         )
+      ) %>% addWMSTiles(
+        "https://gs.marbec-tools.ird.fr/geoserver/COI/ows",
+        layers = "Mangroves_Mada_COI-OCEA-IHSM-ARDA_WGS84-UTM38S_V05-1",
+        options = WMSTileOptions(format = "image/png", transparent = TRUE),
+        group ="Mangroves",
+        attribution = "Seatizen WMS"
       ) %>%
       addLayersControl(
-        baseGroups = c("ESRI", "ESRI2"),
-        overlayGroups = c("draw"),
+        baseGroups = c("ESRI2", "ESRI"),
+        overlayGroups = c("draw","Mangroves"),
         options = layersControlOptions(collapsed = FALSE),
         position = "bottomright"
       )
