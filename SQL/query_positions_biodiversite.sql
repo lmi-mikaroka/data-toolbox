@@ -28,7 +28,7 @@ WHERE
 	AND 
 	trajet.code_engin = station.code_engin 
 	AND 
-	trajet.code_village || '_' || trajet.code_engin || '_' || trajet.code_pecheur  = station.code_pecheur
+	trajet.code_village || '_' || trajet.code_engin || '_' || trajet.code_pecheur  = station.code_village || '_' || station.code_engin || '_' || station.code_pecheur
 	AND 
 	trajet.idpos = etat_predit.idpos 
 	AND 
