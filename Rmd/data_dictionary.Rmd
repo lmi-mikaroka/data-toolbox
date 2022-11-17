@@ -11,6 +11,8 @@ params:
   gsheet_schemas: "https://docs.google.com/spreadsheets/d/1V4XlsKNpm7I4Ya2vEjdZE7I6GQBmfzo7STJB0LxUmiA/edit#gid=864330671"
   gsheet_tables: "https://docs.google.com/spreadsheets/d/1V4XlsKNpm7I4Ya2vEjdZE7I6GQBmfzo7STJB0LxUmiA/edit#gid=1542923561"
   gsheet_columns: "https://docs.google.com/spreadsheets/d/1V4XlsKNpm7I4Ya2vEjdZE7I6GQBmfzo7STJB0LxUmiA/edit#gid=1136675083"
+  GPS_schema_db: "https://drive.google.com/uc?id=1cZCu8LoNBxEpb7edFA-XT_HdCGcW-mhu"
+  GPS_recalibration_schema_db: "https://drive.google.com/uc?id=1qtM0nqv9Xhsu6KreflrZLSjpXQEJp3Ie"
 ---
 
 
@@ -52,6 +54,9 @@ This report describes the data dictionary of the "fish" database. The content is
 * [List of colums for all columns](`r params$gsheet_columns`)
 
 The content of the data dictionnary can be improved by editing the google spreadsheets.
+
+![Database schema of raw GPS data](`r params$GPS_schema_db`){width=40%} ![Database schema of post-processed GPS data](`r params$GPS_recalibration_schema_db`){width=40%}
+
 
 
 # The schemas
