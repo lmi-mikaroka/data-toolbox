@@ -1,0 +1,84 @@
+---
+title: "Data dictionary"
+author: "Barde Julien, Andriamasinoro Herinomena"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    theme: united
+    number_sections: true
+params: 
+  gsheet_schemas: "https://docs.google.com/spreadsheets/d/1V4XlsKNpm7I4Ya2vEjdZE7I6GQBmfzo7STJB0LxUmiA/edit#gid=864330671"
+  gsheet_tables: "https://docs.google.com/spreadsheets/d/1V4XlsKNpm7I4Ya2vEjdZE7I6GQBmfzo7STJB0LxUmiA/edit#gid=1542923561"
+  gsheet_columns: "https://docs.google.com/spreadsheets/d/1V4XlsKNpm7I4Ya2vEjdZE7I6GQBmfzo7STJB0LxUmiA/edit#gid=1136675083"
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+
+```{r}
+library(dplyr)
+library(knitr)
+library(gsheet)
+library(kableExtra)
+```
+
+
+```{r}
+# https://www.rdocumentation.org/packages/gsheet/versions/0.4.5
+df_dwc_gsheet_columns <- as.data.frame(gsheet::gsheet2tbl(params$gsheet_columns))
+df_dwc_gsheet_tables <- as.data.frame(gsheet::gsheet2tbl(params$gsheet_tables))
+df_dwc_gsheet_schemas <- as.data.frame(gsheet::gsheet2tbl(params$gsheet_schemas))
+
+schemas <- df_dwc_gsheet_schemas %>% select(schema=Schema,description=Definition)
+tables <- df_dwc_gsheet_tables %>% select(schema=Schema,table=Table,description=Definition)
+columns <- df_dwc_gsheet_columns %>% select(schema=Schema,table=Table,column=Column,description=Definition)
+
+```
+
+# Introduction
+
+This report describes the data dictionary of the "fish" database. The content is taken from the following google spreadsheets :  
+
+* [List of colums for all schemas](`r params$gsheet_schemas`)
+* [List of colums for all tables](`r params$gsheet_tables`)
+* [List of colums for all columns](`r params$gsheet_columns`)
+
+The content of the data dictionnary can be improved by editing the google spreadsheets.
+
+
+# The schemas
+
+Here is the list and definition of schemas in the database
+
+```{r echo = FALSE, results = 'asis'}
+kable(schemas, caption = "Description of schemas") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+
+# The tables
+
+
+```{r echo = FALSE, results = 'asis'}
+kable(tables, caption = "Description of tables") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+
+# The columns
+
+
+```{r echo = FALSE, results = 'asis'}
+kable(columns, caption = "Description of columns") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+
