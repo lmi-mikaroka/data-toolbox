@@ -1,4 +1,3 @@
-
 SELECT  n.nspname AS table_schema,
         pg_catalog.pg_get_userbyid(c.relowner) AS table_owner,
         c.relname AS table_name,
