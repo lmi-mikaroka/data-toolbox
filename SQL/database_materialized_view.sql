@@ -1,5 +1,3 @@
-
-
 SELECT schemaname AS table_schema,
        matviewname AS table_name,
        matviewowner AS table_owner,
