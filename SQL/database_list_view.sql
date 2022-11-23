@@ -1,5 +1,4 @@
---list la liste des  vue avec leur schema,proprietaire de la vue,le nom de la vue
---le commentaire et sa definition
+
 SELECT  n.nspname AS table_schema,
         pg_catalog.pg_get_userbyid(c.relowner) AS table_owner,
         c.relname AS table_name,
@@ -23,3 +22,5 @@ GROUP BY n.nspname,
 ORDER BY n.nspname,
         c.relname
 ;
+--list la liste des  vue avec leur schema,proprietaire de la vue,le nom de la vue
+--le commentaire et sa definition
