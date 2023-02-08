@@ -86,4 +86,4 @@ kable(columns, caption = "Description of columns") %>%
 
 # References
 
-The script to generate this report is available [here](https://github.com/juldebar/MIKAROKA/blob/main/Rmd/data_dictionary.Rmd)
+The script to generate this report is available [here](https://github.com/juldebar/MIKAROKA/blob/main/Rmd/data-dictionary-crabs.Rmd)
