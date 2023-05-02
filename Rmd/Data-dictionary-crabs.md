@@ -12,7 +12,7 @@ output:
 params: 
   gsheet_schemas: "https://docs.google.com/spreadsheets/d/1nXZODXDUsbX2Ht3w-W0DHHn6ZPRKkhmylreIkU_TnI0/edit#gid=1350070480"
   gsheet_tables: "https://docs.google.com/spreadsheets/d/1nXZODXDUsbX2Ht3w-W0DHHn6ZPRKkhmylreIkU_TnI0/edit#gid=896284500"
-  gsheet_columns: "https://docs.google.com/spreadsheets/d/1nXZODXDUsbX2Ht3w-W0DHHn6ZPRKkhmylreIkU_TnI0/edit#gid=28130720"
+  gsheet_columns: "https://docs.google.com/spreadsheets/d/1nXZODXDUsbX2Ht3w-W0DHHn6ZPRKkhmylreIkU_TnI0/edit#gid=1700967195"
   crabs_schema_db: "https://drive.google.com/uc?id=1BHg7LEUJgpWA-9-plQYkgq6Fx4OtkepM"
 ---
 
@@ -31,7 +31,7 @@ This report describes the data dictionary of the "Corecrabe" database. The conte
 
 * [List of colums for all schemas](https://docs.google.com/spreadsheets/d/1nXZODXDUsbX2Ht3w-W0DHHn6ZPRKkhmylreIkU_TnI0/edit#gid=1350070480)
 * [List of colums for all tables](https://docs.google.com/spreadsheets/d/1nXZODXDUsbX2Ht3w-W0DHHn6ZPRKkhmylreIkU_TnI0/edit#gid=896284500)
-* [List of colums for all columns](https://docs.google.com/spreadsheets/d/1nXZODXDUsbX2Ht3w-W0DHHn6ZPRKkhmylreIkU_TnI0/edit#gid=28130720)
+* [List of colums for all columns](https://docs.google.com/spreadsheets/d/1nXZODXDUsbX2Ht3w-W0DHHn6ZPRKkhmylreIkU_TnI0/edit#gid=1700967195)
 
 The content of the data dictionnary can be improved by editing the google spreadsheets.
 
