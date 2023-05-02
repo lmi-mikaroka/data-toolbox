@@ -84,11 +84,6 @@ library(slickR)
 ################################### <- FIN DE CHARGEMENT DE LIBRAIRIES -> ############################
 
 
-#dbname = "corecrabe_bdd"
-#host = "vps-a8d8821c.vps.ovh.net"
-#port = 5433
-#user = "vfle6843_magnirike"
-#password = "corEcr1beThird1cce22"
 
 
 #################################### CONNEXION A LA BASE DE DONNEE ####################################
