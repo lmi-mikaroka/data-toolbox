@@ -10,7 +10,7 @@ output:
 params: 
   gsheet_schemas: "https://docs.google.com/spreadsheets/d/1nXZODXDUsbX2Ht3w-W0DHHn6ZPRKkhmylreIkU_TnI0/edit#gid=1350070480"
   gsheet_tables: "https://docs.google.com/spreadsheets/d/1nXZODXDUsbX2Ht3w-W0DHHn6ZPRKkhmylreIkU_TnI0/edit#gid=896284500"
-  gsheet_columns: "https://docs.google.com/spreadsheets/d/1nXZODXDUsbX2Ht3w-W0DHHn6ZPRKkhmylreIkU_TnI0/edit#gid=28130720"
+  gsheet_columns: "https://docs.google.com/spreadsheets/d/1nXZODXDUsbX2Ht3w-W0DHHn6ZPRKkhmylreIkU_TnI0/edit#gid=1700967195"
   crabs_schema_db: "https://drive.google.com/uc?id=1BHg7LEUJgpWA-9-plQYkgq6Fx4OtkepM"
 ---
 
