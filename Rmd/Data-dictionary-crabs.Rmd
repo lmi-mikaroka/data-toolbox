@@ -4,9 +4,10 @@ author: "Barde Julien ,Herinomena Andriamasinoro"
 date: "`r Sys.Date()`"
 output: 
   html_document:
-  toc: true
-  theme: united
-  number_sections: true
+    keep_md: true
+    toc: true
+    theme: united
+    number_sections: true
 params: 
   gsheet_schemas: "https://docs.google.com/spreadsheets/d/1nXZODXDUsbX2Ht3w-W0DHHn6ZPRKkhmylreIkU_TnI0/edit#gid=1350070480"
   gsheet_tables: "https://docs.google.com/spreadsheets/d/1nXZODXDUsbX2Ht3w-W0DHHn6ZPRKkhmylreIkU_TnI0/edit#gid=896284500"
