@@ -1,0 +1,254 @@
+---
+title: "Gestion et interrogation de la base de donnee pecheries"
+author: "Marie-Pierre Etienne ,Jérôme Guitton et Herinomena"
+date: "04/05/2023"
+output:
+   html_document:
+    toc: true
+    theme: united
+    number_sections: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+	)
+	
+```
+
+# Introduction
+
+La zone d’étude se situe dans la baie de Tulear, où un programme de suivi a petite échelle des flotilles de pêcheries artisanales et récifales a été mis en place. Ce suivi est composé de plusieurs modules et notamment d’un module de suivi des activités de pêche par GPS. Ainsi des équipements GPS sont ils mis en place sur un échantillon de pirogues et donnent la position de ces bateaux sur une échelle de temps entre 30 secondes et 1,5 minutes envviron. Gràce à ces positions, nous pouvons établir des trajectoire et modéliser les actions de pêche en fonction de ces trajectoires. Pour creer ces modèles, nous aurons besoin de données brutes et de données observées pour que le modèle ait un jeu de données d’apprentissage. Un modèle par type d’engin sera creer et ce modèle servira ensuite à estimer les actions de pêche sans observation.
+
+
+# Connexion à la base 
+
+Pour pouvoir utiliser la base, il faut s'y connecter. Lorsqu'on accède à la base depuis R, il faut spécifier son nom d'utilisateur user et son mot de passe pass comme dans la commande ci-dessous en remplaçant les xxx par les informations de connexion correspondantes.
+
+
+```{r}
+library(DBI)
+con<- DBI::dbConnect(RPostgres::Postgres(),
+                      host = "xxxxxxxxx",
+                      port = 5433,
+                      dbname = "xxxxxxxxx",
+                      user = "xxxxxxxxxx",
+                      password = "xxxxxxxxxxx")
+```
+
+
+A l'issue de cette étape on a fait le lien entre la base de données et R, ce lien est stocké dans la variable conn.
+
+On accède à la base au travers de requête SQL, le présent document montre plusieurs exemples pour extraire de la base des données qui pourront ensuite être visualisées et analysées dans R. L'esprit général est d'écrire une requete SQL et d'indiquer à R qu'il faut exécuter cette requete sur la base à laquelle on a accès grâce à la variable con. On va donc définir une variable requete qui contient la requete et ensuite on exécutera une commande type dbGetQuery(conn, requete) qui exécute la requête sur la base.
+
+# Obtenir la liste des engins 
+Le requete consiste à sélectionner tous les champs de la table engin contenue dans le schéma ref
+
+
+```{r}
+requete <- "select * from ref.engin"
+engins_df <-dbGetQuery(con, requete)
+
+```
+
+La table de données (data.frame) engins_df dans R contient le contenu de la table engin du schéma ref de la base.
+
+```{r}
+engins_df 
+```
+
+# Accéder aux données GPS des points en pêche pour un engin 
+
+## Exemple pour le fusil harpon FU 
+
+On souhaite identifier les points GPS en pêche pour l'engin fusil harpon. Ceci se fait à l'aide la commande détaillée ci-dessous. La commande st_read est utilisée au lieu de dbGetQuery pour indiquer à R que le champs geometry de la base est une information spatiale et le résultat obtenu sera directement une table de données de type sf et donc qui gère les aspects spatiaux. On garde l'information sur le code village, engin et pecheur. Comme le résulatt de la requête est un peu long à importer dans R on se limite aux 100 premiers résultats.
+
+
+```{r}
+library(sf)
+
+requete <- "select distinct A.date_heure, A.code_village, A.code_engin, A.code_pecheur, B.idpos, A.no_trajet, B.geom_spatial 
+from recalibration.trajet_epure_proc_r A 
+inner join recalibration.prepa_predict_etat B on (A.idpos = B.idpos_init and A.no_trajet = B.no_trajet )
+inner join recalibration.etat_predit C on (B.idpos=C.idpos)
+where etat_predit like 'Peche' and code_engin like 'FU' and A.no_trajet=232
+order by B.idpos asc "
+points_peche_FU <- st_read(con,query = requete)
+```
+
+```{r}
+requete_tout <- "select distinct A.date_heure, A.code_village, A.code_engin, A.code_pecheur, B.idpos, A.no_trajet, B.geom_spatial 
+from recalibration.trajet_epure_proc_r A 
+inner join recalibration.prepa_predict_etat B on (A.idpos = B.idpos_init and A.no_trajet = B.no_trajet )
+inner join recalibration.etat_predit C on (B.idpos=C.idpos)
+where  code_engin like 'FU' and A.no_trajet=232
+order by B.idpos asc "
+points_FU <- st_read(con,query = requete_tout)
+```
+
+On peut visualiser les 15 premiers points
+
+```{r}
+points_peche_FU %>% print(n=15)
+```
+
+Il est maintenant très simple de représenter les points identifiés en pêche, avec une couleur différente par sortie
+
+## Par exemple avec leaflet
+
+```{r}
+library(leaflet) 
+
+factpal <- colorFactor(topo.colors(5), points_peche_FU$no_trajet)
+leaflet() %>% addProviderTiles("Esri.WorldImagery")  %>%
+  addCircleMarkers(data=points_FU,radius = 3,
+    color = 'red',
+    stroke = FALSE, fillOpacity = 0.5)%>% 
+  
+  addCircleMarkers(data=points_peche_FU,radius = 3,
+    color = 'green',
+    stroke = FALSE, fillOpacity = 0.5) %>% 
+  setView(lat = mean(st_coordinates(points_peche_FU)[,2]), lng = mean(st_coordinates(points_peche_FU)[,1]),  zoom = 10)
+```
+
+ou avec ggplot
+
+```{r}
+library(ggplot2)
+
+points_peche_FU %>% ggplot() + geom_sf(aes(col = as.factor(no_trajet)))
+```
+
+Dans ce cas, on souhaiterait ajouter le trait de côte qui est disponible dans la base sous forme d'un shapefile. Il est présent dans la base
+
+```{r}
+requete <- "SELECT * FROM geo.communes_uni where code_engin like 'FU'"
+trait_cote_fu <- st_read(con,query = requete)
+points_peche_FU %>% 
+  ggplot() + 
+  geom_sf(aes(col = as.factor(no_trajet))) + 
+  geom_sf(data=trait_cote_fu) 
+```
+
+La carte est trop grande, on peut se concentrer sur une section
+
+```{r}
+bb <- st_bbox(st_buffer(points_peche_FU, dist = 10000))
+points_peche_FU %>% ggplot() + 
+  geom_sf(aes(col = as.factor(no_trajet)))  + 
+  geom_sf(data=trait_cote_fu, alpha=0.5) + 
+  xlim(bb[c(1,3)]) + 
+  ylim(bb[c(2,4)])
+```
+
+La légende n'est pas bien nommée.
+
+```{r}
+points_peche_FU %>% ggplot() + geom_sf(aes(col = as.factor(no_trajet)))  + geom_sf(data=trait_cote_fu, alpha=0.5) + xlim(bb[c(1,3)]) + 
+  ylim(bb[c(2,4)])  + guides(col=guide_legend(title="Sortie")) +
+  theme_minimal()
+```
+
+Si on souhaite se limiter à une période donnée, on peut le préciser dans la requete.
+
+```{r}
+requete <- "select distinct A.code_village, A.code_engin, A.code_pecheur, B.idpos, A.date_heure, A.no_trajet, B.geom_spatial 
+from recalibration.trajet_epure_proc_r A 
+inner join recalibration.prepa_predict_etat B on (A.idpos = B.idpos_init and A.no_trajet = B.no_trajet )
+inner join recalibration.etat_predit C on (B.idpos=C.idpos)
+where etat_predit like 'Peche' and code_engin like 'FU' and A.date_heure between '2018-03-01' and '2018-08-31'
+order by B.idpos asc limit 100"
+points_peche_FU_periode <- st_read(con,query = requete)
+points_peche_FU_periode %>% print(n=15)
+```
+
+Si on souhaite se limiter à une période donnée, pour un village on peut le préciser dans la requête.
+
+```{r}
+requete <- "select distinct A.code_village, A.code_engin, A.code_pecheur, B.idpos, A.date_heure, A.no_trajet, B.geom_spatial 
+from recalibration.trajet_epure_proc_r A 
+inner join recalibration.prepa_predict_etat B on (A.idpos = B.idpos_init and A.no_trajet = B.no_trajet )
+inner join recalibration.etat_predit C on (B.idpos=C.idpos)
+where etat_predit like 'Peche' and code_engin like 'FU'and A.code_village like 'B'and A.date_heure between '2018-03-01' and '2018-08-31' 
+order by B.idpos asc limit 100"
+points_peche_FU_periode <- st_read(con,query = requete)
+
+points_peche_FU_periode %>% print(n=15)
+```
+
+Si on veut changer d'engin et le village
+
+```{r}
+
+requete <- paste0("select distinct A.code_village, A.code_engin, A.code_pecheur, B.idpos, A.date_heure, A.no_trajet, B.geom_spatial 
+from recalibration.trajet_epure_proc_r A 
+inner join recalibration.prepa_predict_etat B on (A.idpos = B.idpos_init and A.no_trajet = B.no_trajet )
+inner join recalibration.etat_predit C on (B.idpos=C.idpos)
+where etat_predit like 'Peche' and code_engin like 'FM'and A.code_village like 'K'and A.date_heure between '2018-03-01' and '2018-08-31' 
+order by B.idpos asc limit 100
+")
+
+points_peche_FM_periode <- st_read(con,query = requete)
+points_peche_FM_periode %>% print(n=15)
+```
+
+# Accéder aux données de suivi
+
+```{r}
+library(dplyr)
+library(grid)
+library (sf)
+
+
+ 
+requete <- "select distinct code_village,pos_village,count(*)as nb_fiches from suivi.suivi_participatif inner join ref.village using(code_village) group by code_village,pos_village"
+
+requete2 <- "select count(*)as nb_fiches from suivi.suivi_participatif inner join ref.village using(code_village) group by code_village,pos_village"
+
+nb_fiche_village<-st_read(con,query=requete)
+
+nombre<-st_read(con,query=requete2)
+
+bb<-st_bbox(nb_fiche_village, dist = 2000)
+
+communes<-st_read(con,query="select * from geo.communes_uni where code_engin like 'ref'")
+
+communes_crop<-st_crop(communes,st_bbox(st_buffer(nb_fiche_village,4000)))
+
+centre <- nb_fiche_village %>% 
+  mutate(village_centroid = st_centroid(pos_village))
+#####ereur encore à faire
+ggplot() +
+  geom_sf(data = communes_crop, fill="grey") +
+  geom_sf(data = centre,aes(geometry = village_centroid,fill=nb_fiches))
+
+```
+
+et pour faire la même carte plus jolie
+
+```{r}
+
+#####ereur encore à faire
+nb_fiche_village %>%
+  mutate(village_centroid = st_centroid(pos_village)) %>%
+ggplot() +
+  geom_sf(data = communes_crop) +
+  geom_sf(pch = 21,
+          aes(geometry = village_centroid), alpha = 0.6, fill = "#d80707") +
+  scale_size(
+    range = c(1, 15),
+    guide = guide_legend(
+      direction = "horizontal",
+      nrow = 1,
+      label.position = "bottom")) +
+  guides(fill = guide_legend(title = "")) +
+  labs(title = "Nombre de fiches",
+       sub = "2018",
+       caption = "",
+       size = "") +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  ggtitle("Nombre de fiches par villages")
+```
