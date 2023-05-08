@@ -1,0 +1,525 @@
+---
+title: "Procédure de Croisement GPS suivi des pêcheries"
+author: "herinomena"
+date: "30/11/2022"
+html_document:
+    toc: true
+    theme: united
+    number_sections: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+	)
+```
+
+## Introduction
+```{r}
+library(DBI)
+
+
+con <- DBI::dbConnect(RPostgres::Postgres(),
+                      host = "xxxxx",
+                      port = 5433,
+                      dbname = "xxxx",
+                      user = "xxxx",
+                      password = "xxxx")
+```
+
+Pour le trajet 99, on affiche les points en trajet (rouge) et les points prédits en pêches (Vert)
+
+```{r }
+library(leaflet)
+library(ggplot2)
+library(sf)
+
+trajet_points <- st_read(con,query = "select idpos,A.geom_spatial 
+from trajet_epure A 
+inner join prepa_predict_etat using(idpos) 
+inner join etat_predit using (idpos)  
+where A.no_trajet=99 ")
+
+trajet_recalibre_points <- st_read(con,query = "select idpos,A.geom_spatial 
+from trajet_epure A 
+inner join prepa_predict_etat using(idpos) 
+inner join etat_predit using (idpos)  
+where A.no_trajet=99 and etat_predit='Peche'")
+
+pal_diff   <- colorFactor(c("Green","red"), domain = c('trajet','peche'))
+
+leaflet() %>% addProviderTiles("Esri.WorldImagery")  %>%
+  addCircleMarkers(data=trajet_points,radius = 2,
+    color = 'red',
+    stroke = FALSE, fillOpacity = 0.5) %>%
+  addCircleMarkers(data=trajet_recalibre_points,color='green',radius = 3,
+    stroke = FALSE, fillOpacity = 1) %>% 
+  addLegend("bottomright", pal =pal_diff, values = c('trajet','peche'),
+    title = "Statut",
+    opacity = 1)
+```
+
+Même trajet sur des données recalibrées à 1 mn
+
+```{r}
+library(leaflet)
+
+trajet_points <- st_read(con,query = "select idpos,geom_spatial 
+from recalibration.prepa_predict_etat 
+inner join recalibration.etat_predit using (idpos)  where no_trajet=99 ")
+
+trajet_recalibre_points <- st_read(con,query = "select idpos,geom_spatial 
+from recalibration.prepa_predict_etat 
+inner join recalibration.etat_predit using (idpos)  
+where no_trajet=99 and etat_predit='Peche'")
+
+pal_diff   <- colorFactor(c("Green","red"), domain = c('trajet','peche'))
+
+leaflet() %>% addProviderTiles("Esri.WorldImagery")  %>%
+  addCircleMarkers(data=trajet_points,radius = 2,
+    color = 'red',
+    stroke = FALSE, fillOpacity = 0.5) %>%
+  addCircleMarkers(data=trajet_recalibre_points,color='green',radius = 3,
+    stroke = FALSE, fillOpacity = 1) %>% 
+  addLegend("bottomright", pal =pal_diff, values = c('trajet','peche'),
+    title = "Statut",
+    opacity = 1)
+```
+Pour ce trajet on a une concordance avec la vue dispatche_captures qui va regarder si on a des trajets avec de la prédiction en pêche sur le même jours (même pêcheur) que le suivi. Si oui on va affecter au trajet les captures (tot_capture) qui ont été observées. (en affectant 1/n de la captures à chaque points en pêche n etant le nombre total de points en pêche pour la marée)
+
+```{sql, connection=con}
+CREATE MATERIALIZED VIEW IF NOT EXISTS public.dispatche_captures
+TABLESPACE pg_default
+AS
+ WITH part1 AS (
+         SELECT suivi_participatif.date_sortie,
+            split_part(suivi_participatif.code_pecheur::text, '_'::text, 3) AS code_pecheur,
+            suivi_participatif.code_village,
+            suivi_participatif.code_engin,
+            suivi_participatif.poids_poissons_recifaux,
+            suivi_participatif.poids_poissons_pelagiques,
+            suivi_participatif.poids_ppp,
+            suivi_participatif.poids_crabe_bon,
+            suivi_participatif.poids_crabe_mauvais,
+            suivi_participatif.poids_crevette,
+            suivi_participatif.poids_calamar
+           FROM suivi.suivi_participatif
+          WHERE upper(suivi_participatif.jour_nuit::text) = ANY (ARRAY['JOUR'::text, 'NUIT'::text])
+        ), part2 AS (
+         SELECT DISTINCT part1.code_village,
+            part1.code_engin,
+            part1.code_pecheur,
+            part1.date_sortie,
+            part1.poids_poissons_recifaux,
+            part1.poids_poissons_pelagiques,
+            part1.poids_ppp,
+            part1.poids_crabe_bon,
+            part1.poids_crabe_mauvais,
+            part1.poids_crevette,
+            part1.poids_calamar,
+            count(trajet_epure.idpos) AS compte,
+            sum(prepa_predict_etat.duree) AS duree,
+            date_part('epoch'::text, sum(prepa_predict_etat.duree) / 3600::double precision) AS duree_h,
+            trajet_epure.no_trajet
+           FROM part1
+             JOIN trajet_epure USING (code_village, code_pecheur, code_engin)
+             JOIN prepa_predict_etat USING (idpos)
+             JOIN etat_predit USING (idpos)
+          WHERE part1.date_sortie = trajet_epure.date_heure::date AND etat_predit.etat_predit::text = 'Peche'::text
+          GROUP BY part1.code_village, part1.code_engin, part1.code_pecheur, part1.date_sortie, part1.poids_poissons_recifaux, part1.poids_poissons_pelagiques, part1.poids_ppp, part1.poids_crabe_bon, part1.poids_crabe_mauvais, part1.poids_crevette, part1.poids_calamar, trajet_epure.no_trajet, etat_predit.etat_predit
+         HAVING count(trajet_epure.idpos) > 50
+          ORDER BY trajet_epure.no_trajet
+        )
+ SELECT DISTINCT trajet_epure.idpos,
+    etat_predit.etat_predit,
+    part2.duree,
+    part2.duree_h,
+    'captures'::text AS type_data,
+    part2.poids_poissons_recifaux / part2.compte::numeric AS poissons_recifaux,
+    part2.poids_poissons_pelagiques / part2.compte::numeric AS poissons_pelagiques,
+    part2.poids_ppp / part2.compte::numeric AS ppp,
+    part2.poids_crabe_bon / part2.compte::numeric AS crabe_bon,
+    part2.poids_crabe_mauvais / part2.compte::numeric AS crabe_mauvais,
+    part2.poids_crevette / part2.compte::numeric AS crevette,
+    part2.poids_calamar / part2.compte::numeric AS calamar
+   FROM part2
+     JOIN trajet_epure USING (code_village, code_engin, code_pecheur, no_trajet)
+     JOIN etat_predit USING (idpos)
+  WHERE etat_predit.etat_predit::text = 'Peche'::text
+UNION
+ SELECT DISTINCT trajet_epure.idpos,
+    etat_predit.etat_predit,
+    part2.duree,
+    part2.duree_h,
+    'cpue'::text AS type_data,
+    part2.poids_poissons_recifaux::double precision / part2.duree_h AS poissons_recifaux,
+    part2.poids_poissons_pelagiques::double precision / part2.duree_h AS poissons_pelagiques,
+    part2.poids_ppp::double precision / part2.duree_h AS ppp,
+    part2.poids_crabe_bon::double precision / part2.duree_h AS crabe_bon,
+    part2.poids_crabe_mauvais::double precision / part2.duree_h AS crabe_mauvais,
+    part2.poids_crevette::double precision / part2.duree_h AS crevette,
+    part2.poids_calamar::double precision / part2.duree_h AS calamar
+   FROM part2
+     JOIN trajet_epure USING (code_village, code_engin, code_pecheur, no_trajet)
+     JOIN etat_predit USING (idpos)
+  WHERE etat_predit.etat_predit::text = 'Peche'::text
+WITH DATA;
+
+ALTER TABLE public.dispatche_captures
+    OWNER TO jerome;
+
+GRANT SELECT ON TABLE public.dispatche_captures TO faustinato;
+GRANT ALL ON TABLE public.dispatche_captures TO jerome;
+GRANT SELECT ON TABLE public.dispatche_captures TO mariepierre;
+
+-- il n'y a pas d'erreur dans ce requette si on l'execute sur PGAdmin
+
+```
+
+La vue dispatche_capture affecte ? chaque position en p?che les captures observ?es qui coincindent
+
+```{r}
+trajets <- st_read(con,query = "with part1 as
+                      (
+                      select * from trajet_epure where no_trajet=7662 order by idpos
+                      )
+                      select st_makeline(geom_spatial) as lignes from part1")
+
+trajet_poids <- st_read(con,query = "select idpos,geom_spatial,poissons_recifaux as trajet_poids 
+from trajet_epure 
+inner join dispatche_captures using(idpos) 
+where etat_predit= 'peche' and no_trajet=7662 ")
+
+#il y a un condition where type_data='captures' qui n'existe pas
+
+pal_diff   <- colorFactor(c("Green","red"), domain = c('trajet','peche'))
+
+leaflet() %>% addProviderTiles("Esri.WorldImagery")  %>%
+  addPolylines(data=trajets,color = 'red') %>%
+  addCircleMarkers(data=trajet_poids,color='green',radius = 1,  stroke = FALSE, fillOpacity = 1) %>% 
+  addLegend("bottomright", pal =pal_diff, values = c('trajet','peche'),
+    title = "Statut",
+    opacity = 1)
+```
+La vraie utlité est ensuite de passer à des cartes d’aggrégation par rectangles statistiques comme cela
+
+Et là ce sont bien des KG de poissons récifaux par carrées stats
+```{r}
+library(maps)
+library(mapdata)
+library(RColorBrewer)
+
+trajets_poids <- st_read(con,query = "select distinct cells.id as LIEU,geom,sum(poissons_recifaux) as VAL_P from 
+geo.cells inner join trajet_epure on st_intersects(geom_spatial,geom) 
+inner join dispatche_captures using(idpos) where no_trajet=7662
+group by LIEU,geom order by LIEU desc")
+trajets$val
+```
+
+
+```{r}
+global <- map_data("world")
+
+pal2 <- colorNumeric(palette = "Reds",domain = trajets_poids$val_p)
+
+
+leaflet() %>% addProviderTiles("Esri.WorldImagery")  %>%
+  addPolylines(data=trajets,color = 'grey')%>%
+  addPolygons(data=trajets_poids,stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1,
+    color =  ~pal2(trajets_poids$val_p)) %>% 
+  addLegend('topright',
+    pal = pal2, 
+    values = trajets_poids$val_p)
+```
+Et là ce sont bien des KG de poissons récifaux par carrées stats
+
+```{r}
+global <- map_data("world")
+
+pal2 <- colorNumeric(palette = "Reds",domain = trajets_poids$val_p)
+
+
+leaflet() %>% addProviderTiles("Esri.WorldImagery")  %>%
+  addPolylines(data=trajets,color = 'grey')%>%
+  addPolygons(data=trajets_poids,stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1,
+    color =  ~pal2(trajets_poids$val_p)) %>% addLegend('topright',
+                  pal = pal2, 
+                  values = trajets_poids$val_p)
+```
+
+Et là ce sont bien des KG de poissons récifaux par carrées stats
+```{r}
+library(maps)
+library(mapdata)
+library(RColorBrewer)
+trajets_poids <- st_read(con,query = "select distinct cells.id as LIEU,geom,sum(poissons_recifaux) as VAL_P from geo.cells inner join trajet_epure on st_intersects(geom_spatial,geom) 
+              inner join dispatche_captures using(idpos) where code_village='L' 
+              group by LIEU,geom order by LIEU desc")
+trajets$val
+#il n'y apas de collonne type data dans la base "and type_data='captures'
+```
+
+```{r}
+global <- map_data("world")
+
+pal2 <- colorNumeric(palette = "Reds",domain = trajets_poids$val_p)
+
+
+leaflet() %>% addProviderTiles("Esri.WorldImagery")  %>%
+   addPolylines(data=trajets,color = 'grey')%>%
+  addPolygons(data=trajets_poids,stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1,
+    color =  ~pal2(trajets_poids$val_p)) %>% addLegend('topright',
+                  pal = pal2, 
+                  values = trajets_poids$val_p)
+```
+
+```{r}
+trajets_poids <- st_read(con,query = "select distinct cells.id as LIEU,geom,sum(poissons_recifaux) as VAL_P from geo.cells inner join trajet_epure on st_intersects(geom_spatial,geom) 
+              inner join dispatche_captures using(idpos) where code_village='K'  and code_engin like 'SF'
+              group by LIEU,geom order by LIEU desc")
+
+#il n'y apas de collonne type data dans la base "and type_data='captures'
+trajets$val
+```
+
+```{r}
+global <- map_data("world")
+
+pal2 <- colorNumeric(palette = "Reds",domain = trajets_poids$val_p)
+
+
+leaflet() %>% addProviderTiles("Esri.WorldImagery")  %>%
+   addPolylines(data=trajets,color = 'grey')%>%
+  addPolygons(data=trajets_poids,stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1,
+    color =  ~pal2(trajets_poids$val_p)) %>% addLegend('topright',
+                  pal = pal2, 
+                  values = trajets_poids$val_p)
+```
+
+Là on fait une moyennes des CPUE par Carrée A revoir
+
+```{r}
+library(maps)
+library(mapdata)
+library(RColorBrewer)
+trajets_poids <- st_read(con,query = "select distinct cells.id as LIEU,geom,avg(poissons_recifaux) as VAL_P from geo.cells inner join trajet_epure on st_intersects(geom_spatial,geom) 
+              inner join dispatche_captures using(idpos) where code_village='K'  and code_engin='SF'
+              group by LIEU,geom order by LIEU desc")
+
+#and type_data='cpue'il ny a pas de colone
+
+global <- map_data("world")
+
+pal2 <- colorNumeric(palette = "Reds",domain = trajets_poids$val_p)
+
+
+leaflet() %>% addProviderTiles("Esri.WorldImagery")  %>%
+   addPolylines(data=trajets,color = 'grey')%>%
+  addPolygons(data=trajets_poids,stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1,
+    color =  ~pal2(trajets_poids$val_p)) %>% addLegend('topright',
+                  pal = pal2, 
+                  values = trajets_poids$val_p)
+```
+
+```{r}
+pal3<-colorBin(palette='Reds', domain=trajets_poids$val_p, bins = 8, pretty = TRUE,na.color = "#808080", alpha = FALSE, reverse = FALSE)
+
+leaflet() %>% addProviderTiles("Esri.WorldImagery")  %>%
+   addPolylines(data=trajets,color = 'grey')%>%
+  addPolygons(data=trajets_poids,stroke = FALSE, smoothFactor = 0.2, fillOpacity = 1,
+    color =  ~pal3(trajets_poids$val_p)) %>% addLegend('topright',
+                  pal = pal3, 
+                  values = trajets_poids$val_p)
+```
+
+Et Si on utilise GGplot pour faire les cartes
+
+```{r}
+library(maps)
+library(mapdata)
+library(RColorBrewer)
+
+trajets_poids <- st_read(con,query = "select distinct cells.id as LIEU,geom,avg(poissons_recifaux) as VAL_P from geo.cells inner join recalibration.trajet_epure_proc_r A on st_intersects(geom_spatial,geom) 
+              inner join prepa_predict_etat as B on (A.idpos = B.idpos and A.no_trajet=B.no_trajet) inner join dispatche_captures C 
+        on (B.idpos=C.idpos)  where code_village='K' and  code_engin='SF'
+              group by LIEU,geom order by LIEU desc")
+
+#type_data='cpue' and il n'y a pas ce colonne
+
+ggplot(trajets_poids[trajets_poids$val_p>0,]) + 
+  geom_sf(data = trajets_poids[trajets_poids$val_p>0,],aes(fill=val_p), lwd = 0.1)+scale_fill_gradientn(colours = brewer.pal(8,"Reds"))+ 
+  ggtitle("CPUE moyennes par rectangles")
+```
+
+```{r}
+trajets_poids <- st_read(con,query = "select distinct cells.id as LIEU,geom,sum(poissons_recifaux) as VAL_P from geo.cells inner join recalibration.trajet_epure_proc_r A on st_intersects(geom_spatial,geom) 
+              inner join recalibration.prepa_predict_etat B on (A.idpos=B.idpos_init and A.no_trajet=B.no_trajet) inner join  public.dispatche_captures C on (B.idpos=C.idpos)  where code_village='K'  and code_engin='SF'
+              group by LIEU,geom order by LIEU desc")
+
+#and type_data='captures'il n'y a pas de colone 
+
+ggplot(trajets_poids[trajets_poids$val_p>0,]) + 
+  geom_sf(data = trajets_poids[trajets_poids$val_p>0,],aes(fill=val_p), lwd = 0.1)+scale_fill_gradientn(colours = brewer.pal(8,"Reds"))+ 
+  ggtitle("Captures par rectangles") 
+
+
+```
+
+Et on peut aussi lui demander de faire des cartes en fonction d’un paramètre supplémentaire
+
+```{r}
+library(maps)
+library(mapdata)
+library(RColorBrewer)
+trajets_poids <- st_read(con,query = "select distinct cells.id as LIEU,code_engin,geom,sum(poissons_recifaux) as VAL_P from geo.cells inner join trajet_epure on st_intersects(geom_spatial,geom) 
+              inner join dispatche_captures using(idpos) where code_village='K' 
+              group by LIEU,geom,code_engin order by LIEU desc")
+
+#il n'y a pas de colonne and type_data='cpue' 
+
+ggplot(trajets_poids[trajets_poids$val_p>0,]) + 
+  geom_sf(data = trajets_poids[trajets_poids$val_p>0,],aes(fill=val_p), lwd = 0.1)+scale_fill_gradientn(colours = brewer.pal(8,"Reds"))+ 
+  facet_grid(. ~ code_engin)+
+  ggtitle("Captures globales par rectangles") 
+```
+
+```{r}
+
+trajets_poids <- st_read(con,query = "select distinct cells.id as LIEU,code_village,geom,sum(poissons_recifaux) as VAL_P from geo.cells inner join trajet_epure on st_intersects(geom_spatial,geom) 
+              inner join dispatche_captures using(idpos)
+              group by LIEU,geom,code_village order by LIEU desc")
+
+#type_data='captures'  il n y a pas de collone
+
+ggplot(trajets_poids[trajets_poids$val_p>0,]) + 
+  geom_sf(data = trajets_poids[trajets_poids$val_p>0,],aes(fill=val_p), lwd = 0.1)+scale_fill_gradientn(colours = brewer.pal(8,"Reds"))+ 
+  facet_grid(. ~ code_village)+
+  ggtitle("Captures globales par rectangles") 
+```
+
+Avec une union des rectangles
+```{r}
+library(maps)
+library(mapdata)
+library(rgdal)
+```
+
+```{r}
+library(RColorBrewer)
+
+trajets_poids <- st_read(con,query = "select distinct code_village,st_convexhull(st_union(geom)) as geom,sum(poissons_recifaux) as VAL_P from geo.cells inner join trajet_epure on st_intersects(geom_spatial,geom) 
+              inner join dispatche_captures using(idpos) where  code_engin like 'LN'
+              group by code_village ")
+#type_data='captures' and le colone n'existe pas
+world<-read_sf('C://.shp', quiet = TRUE)
+#fichier shape file à chercher
+wg <- "+proj=longlat +datum=WGS84"
+st_crs(world) <- wg
+mada<-world[world$CNTRY_NAME=='Madagascar',]
+
+xlim_trajet<-as.vector(c(st_bbox(trajet_poids)$xmin-0.2,st_bbox(trajet_poids)$xmax)+0.1)
+ylim_trajet<-as.vector(c(st_bbox(trajet_poids)$ymin-0.2,st_bbox(trajet_poids)$ymax+0.1))
+
+
+ggplot(trajets_poids[trajets_poids$val_p>0,]) + 
+  geom_sf(data = trajets_poids[trajets_poids$val_p>0,],aes(fill=code_village), lwd = 0.1)+
+  geom_sf(data = mada,lwd = 0.1)+xlim(xlim_trajet) +ylim(ylim_trajet)+
+  facet_grid(. ~ code_village)+
+  ggtitle("Captures globales par rectangles") 
+```
+
+
+```{r}
+ggplot(trajets_poids[trajets_poids$val_p>0,]) + 
+  geom_sf(data = mada,lwd = 0.1)+xlim(xlim_trajet) +ylim(ylim_trajet)+
+  geom_sf(data = trajets_poids[trajets_poids$val_p>0,],aes(fill=code_village), lwd = 0.1)+
+  ggtitle("Captures globales par rectangles") 
+```
+
+Avec le reperage du village qui pêche le plu sdans chaque rectangle
+
+```{r}
+library(maps)
+library(mapdata)
+library(rgdal)
+library(RColorBrewer)
+
+trajets_poids <- st_read(con,query = "with part1 as
+(
+    select distinct code_village,geom,id,sum(poissons_recifaux) as VAL_P from geo.cells inner join trajet_epure on st_intersects(geom_spatial,geom) 
+              inner join dispatche_captures using(idpos) where etat_predit= 'peche' and code_engin like 'LN'
+              group by code_village,geom,id
+)
+,les_max as
+(
+select distinct id,max(VAL_P) as VAL_P from part1 group by id
+)
+select * from  part1 inner join les_max using (id,VAL_P)
+")
+#probleme de type_data='captures' and
+mada<-read_sf('C://Users//Herinomena//Desktop//BDD//ihsm_jonofia//.shp', quiet = TRUE)
+#Fichier shape file à chercher
+wg <- "+proj=longlat +datum=WGS84"
+st_crs(world) <- wg
+mada<-world[world$CNTRY_NAME=='Madagascar',]
+
+xlim_trajet<-as.vector(c(st_bbox(trajet_poids)$xmin-0.2,st_bbox(trajet_poids)$xmax)+0.1)
+ylim_trajet<-as.vector(c(st_bbox(trajet_poids)$ymin-0.2,st_bbox(trajet_poids)$ymax+0.1))
+
+
+ggplot(trajets_poids[trajets_poids$val_p>0,]) + 
+  geom_sf(data = trajets_poids[trajets_poids$val_p>0,],aes(fill=code_village), lwd = 0.1)+
+  geom_sf(data = mada,lwd = 0.1)+xlim(xlim_trajet) +ylim(ylim_trajet)+
+  ggtitle("Captures globales par rectangles") 
+```
+
+```{r}
+trajets_poids <- st_read(con,query = "with part1 as
+(
+    select distinct code_village,geom,id,sum(poissons_recifaux) as VAL_P from cells2 inner join trajet_epure on st_intersects(geom_spatial,geom) 
+              inner join dispatche_captures using(idpos) where type_data='captures' and code_engin like 'LN'
+              group by code_village,geom,id
+)
+,les_max as
+(
+select distinct id,max(VAL_P) as VAL_P from part1 group by id
+)
+select * from  part1 inner join les_max using (id,VAL_P)
+")
+#il n'y a pas de table cell2
+
+ggplot(trajets_poids[trajets_poids$val_p>0,]) + 
+  geom_sf(data = trajets_poids[trajets_poids$val_p>0,],aes(fill=code_village), lwd = 0.1)+
+  geom_sf(data = mada,lwd = 0.1)+xlim(xlim_trajet) +ylim(ylim_trajet)+
+  ggtitle("Captures globales par rectangles") 
+```
+
+Pour faire un histogramme des efforts observés et extrapolés
+```{r}
+
+######## Histogramme Effort observe et Effort Extrapole en fonction de village#################
+tmp <- dbGetQuery(con,"with mod_1 as (with part_1 as (select distinct code_village, code_engin, count (code_pecheur) as nb_pecheur_recense from suivi.ref_pecheur group by
+code_village,code_engin order by code_village,code_engin), part_2 as (select distinct code_village,code_engin, to_char(date_heure::date,'YYYY-MM') as mois, count (distinct code_pecheur) as 
+nb_pecheur_suivi from trajet_epure group by code_village,code_engin,mois order by code_village,code_engin,mois)
+select distinct code_village, code_engin,mois,round(nb_pecheur_suivi::numeric*1.00/nb_pecheur_recense,2) as taux_ech from part_1 inner join part_2
+using (code_village,code_engin)),
+    mod_2 as (select distinct code_village, code_engin, to_char(trajet_epure_proc_r.date_heure::date,'YYYY-MM') as mois, 
+count (trajet_epure_proc_r.idpos) as effort_obs_mn from recalibration.trajet_epure_proc_r inner join recalibration.prepa_predict_etat 
+on (trajet_epure_proc_r.idpos = prepa_predict_etat.idpos_init and trajet_epure_proc_r.no_trajet = prepa_predict_etat.no_trajet ) 
+inner join recalibration.etat_predit on (prepa_predict_etat.idpos = etat_predit.idpos) where etat_predit like 'Peche' group by code_village,code_engin,mois),
+    mod_3 as (select code_village, code_engin,mois,effort_obs_mn, taux_ech,effort_obs_mn *(1/taux_ech) as 
+effort_extrapole from mod_1 inner join mod_2 using (code_village,code_engin,mois))
+select distinct code_village,round(sum(effort_obs_mn)) as som_effort_obs, round(sum (effort_extrapole)) as som_eff_extra 
+from mod_3 group by code_village")
+
+#Le type d'effort doit devenir une variable pour utiliser geom_bar et donc il fait décroiser me tableau avec GGplot
+library(reshape2)
+efforts<- melt(tmp,code_village=c('code_village'),mesure.vars=c('som_effort_obs':'som_eff_extra'),
+     variable.name="type_data", value.name="valeurs")
+ggplot(data=efforts, aes(x=code_village, y=valeurs, fill=type_data)) +
+  geom_bar(stat="identity",position=position_dodge())
+
+```
+
