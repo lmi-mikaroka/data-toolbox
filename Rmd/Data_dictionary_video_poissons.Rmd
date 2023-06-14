@@ -1,0 +1,72 @@
+---
+title: "Data dictionary video poissons"
+author: "Herinomena Andriamasinoro, Julien bard"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    keep_md: true
+    toc: true
+    theme: united
+    number_sections: true
+params: 
+  gsheet_tables: "https://docs.google.com/spreadsheets/d/1pnqUyW63rt33lI5vy4CSSU71zEnrVyJ0fAau1HfzR8g/edit#gid=1131747976"
+  gsheet_columns: "https://docs.google.com/spreadsheets/d/1pnqUyW63rt33lI5vy4CSSU71zEnrVyJ0fAau1HfzR8g/edit?usp=sharing"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+```{r}
+library(dplyr)
+library(knitr)
+library(gsheet)
+library(kableExtra)
+```
+
+
+```{r}
+df_dwc_gsheet_columns <- as.data.frame(gsheet::gsheet2tbl(params$gsheet_columns))
+df_dwc_gsheet_tables <- as.data.frame(gsheet::gsheet2tbl(params$gsheet_tables))
+
+tables <- df_dwc_gsheet_tables %>% select(table=Table,description=Definition)
+columns <- df_dwc_gsheet_columns %>% select(table=Table,column=Column,description=Definition)
+```
+
+# Introduction
+
+This report describes the data dictionary for the
+" small dried fish" data. The contents are taken from the following Google spreadsheets:
+
+* [List of colums for all tables](`r params$gsheet_tables`)
+* [List of colums for all columns](`r params$gsheet_columns`)
+
+The content of the data dictionnary can be improved by editing the google spreadsheets.
+
+
+
+# The tables
+
+Here is the list and definition of tables in the data
+
+```{r echo = FALSE, results = 'asis'}
+kable(tables, caption = "Description of tables") %>%
+kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+# The columns
+
+
+```{r echo = FALSE, results = 'asis'}
+kable(columns, caption = "Description of columns") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+# References
+
+The script to generate this report is available [here](https://github.com/juldebar/MIKAROKA/blob/main/Rmd/Data_dictionary_video_poissons.Rmd)
+
