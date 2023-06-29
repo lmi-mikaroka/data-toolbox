@@ -1,7 +1,7 @@
 ---
 title: "Data dictionary microorganismes pathogènes"
 author: "Herinomena Andriamasinoro, Julien bard"
-date: "2023-06-16"
+date: "2023-06-29"
 output:
   html_document:
     keep_md: true
@@ -46,7 +46,7 @@ Here is the list and definition of tables in the data
 <tbody>
   <tr>
    <td style="text-align:left;"> data_with_corrector </td>
-   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> données brutes des comptages des colonies et caracteristiques des echantillons( plastiques) </td>
   </tr>
 </tbody>
 </table>
