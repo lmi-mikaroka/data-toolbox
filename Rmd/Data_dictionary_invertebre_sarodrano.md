@@ -1,7 +1,7 @@
 ---
 title: "Data dictionary invertebre sarodrano"
 author: "Herinomena Andriamasinoro, Julien bard"
-date: "2023-06-14"
+date: "2023-07-03"
 output:
   html_document:
     keep_md: true
@@ -22,8 +22,7 @@ params:
 
 # Introduction
 
-This report describes the data dictionary for the
-" small dried fish" data. The contents are taken from the following Google spreadsheets:
+This report describes the data dictionary for the "sarodrano invertebrate" data. The contents are taken from the following Google spreadsheets:
 
 * [List of colums for all tables](https://docs.google.com/spreadsheets/d/1OL6hwzyX0yYpy119oIEC2LeXBkbnnbd1fyROMBNFJYM/edit#gid=932678001)
 * [List of colums for all columns](https://docs.google.com/spreadsheets/d/1OL6hwzyX0yYpy119oIEC2LeXBkbnnbd1fyROMBNFJYM/edit?usp=sharing)

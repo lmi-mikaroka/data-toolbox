@@ -1,7 +1,7 @@
 ---
 title: "data dictionary chalut moustiquaire "
 author: "Herinomena Andriamasinoro, Julien Barde"
-date: "2023-06-14"
+date: "2023-07-03"
 output:
   html_document:
     keep_md: true
@@ -26,7 +26,7 @@ params:
 # Introduction
 
 This report describes the data dictionary for the
-" small dried fish" data. The contents are taken from the following Google spreadsheets:
+" Mosquito net trawl" data. The contents are taken from the following Google spreadsheets:
 
 * [List of colums for all tables](https://docs.google.com/spreadsheets/d/1XRVcsoY7tCj-8XCBc1WVvcoe0Fa3F1J0iHi6e9IWFYY/edit#gid=1424990871)
 * [List of colums for all columns](https://docs.google.com/spreadsheets/d/1XRVcsoY7tCj-8XCBc1WVvcoe0Fa3F1J0iHi6e9IWFYY/edit?usp=sharing)

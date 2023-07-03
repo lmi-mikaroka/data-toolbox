@@ -43,7 +43,7 @@ columns <- df_dwc_gsheet_columns %>% select(table=Table,column=Column,descriptio
 # Introduction
 
 This report describes the data dictionary for the
-" small dried fish" data. The contents are taken from the following Google spreadsheets:
+" Mosquito net trawl" data. The contents are taken from the following Google spreadsheets:
 
 * [List of colums for all tables](`r params$gsheet_tables`)
 * [List of colums for all columns](`r params$gsheet_columns`)
