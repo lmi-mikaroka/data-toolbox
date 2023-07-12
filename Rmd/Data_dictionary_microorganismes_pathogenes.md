@@ -21,8 +21,7 @@ params:
 
 # Introduction
 
-This report describes the data dictionary for the
-" small dried fish" data. The contents are taken from the following Google spreadsheets:
+This report describes the data dictionary for the "pathogenic microorganisms" data. The contents are taken from the following Google spreadsheets:
 
 * [List of colums for all tables](https://docs.google.com/spreadsheets/d/1rUXw_456qoHub6TAL5Hu4Tyl1i_u4gi-5Cl5xiALatI/edit#gid=850578440)
 * [List of colums for all columns](https://docs.google.com/spreadsheets/d/1rUXw_456qoHub6TAL5Hu4Tyl1i_u4gi-5Cl5xiALatI/edit?usp=sharing)
