@@ -1,7 +1,7 @@
 ---
 title: "data_dictionary_sarodrano"
 author: "Herinomena Andriamasinoro, Julien Barde"
-date: "2023-06-14"
+date: "2023-07-12"
 output:
   html_document:
     keep_md: true
@@ -26,7 +26,7 @@ params:
 # Introduction
 
 This report describes the data dictionary for the
-" small dried fish" data. The contents are taken from the following Google spreadsheets:
+"fish diversity in the Sarodrano mangrove" data. The contents are taken from the following Google spreadsheets:
 
 * [List of colums for all tables](https://docs.google.com/spreadsheets/d/1P1mA62rP30XJC6JpUVfdkB6fMXQyzabfbrGUqBf9vTo/edit#gid=695475155)
 * [List of colums for all columns](https://docs.google.com/spreadsheets/d/1P1mA62rP30XJC6JpUVfdkB6fMXQyzabfbrGUqBf9vTo/edit?usp=sharing)
@@ -50,19 +50,19 @@ Here is the list and definition of tables in the data
 <tbody>
   <tr>
    <td style="text-align:left;"> FICHE_VAR_DATA </td>
-   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> Les FICHES_VAR_DATA sont des fiches utilisées pour prendre les variables sur les captures, considérées comme utiles, lors des campagnes d'échantillonnages </td>
   </tr>
   <tr>
    <td style="text-align:left;"> FICHE PARAMETRE PH_CH </td>
-   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> Les FICHES PARAMETRE PH_CH sont des fiches de prélèvements des paramètres environnementaux durants chaques sorties </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ENQUETE_SARODRANO </td>
-   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> L'ENQUETE SARODRANO est une enquête menée dans le but d'obtenir des données historiques sur les pratiques de pêche dans la baie de Sarodrano </td>
   </tr>
   <tr>
    <td style="text-align:left;"> ENQUETE_PCM </td>
-   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> L'ENQUETE_PCM est une enquête préliminaire visant à déterminer les modalités d'échantillonnage auprès des pêcheurs au chalut à moustiquaire le long de la mangrove de Sarodrano </td>
   </tr>
 </tbody>
 </table>
