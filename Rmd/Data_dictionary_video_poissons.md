@@ -1,7 +1,7 @@
 ---
 title: "Data dictionary video poissons"
 author: "Herinomena Andriamasinoro, Julien bard"
-date: "2023-06-14"
+date: "2023-07-03"
 output: 
   html_document:
     keep_md: true
@@ -22,8 +22,7 @@ params:
 
 # Introduction
 
-This report describes the data dictionary for the
-" small dried fish" data. The contents are taken from the following Google spreadsheets:
+This report describes the data dictionary for the "video fish monitoring" data. The contents are taken from the following Google spreadsheets:
 
 * [List of colums for all tables](https://docs.google.com/spreadsheets/d/1pnqUyW63rt33lI5vy4CSSU71zEnrVyJ0fAau1HfzR8g/edit#gid=1131747976)
 * [List of colums for all columns](https://docs.google.com/spreadsheets/d/1pnqUyW63rt33lI5vy4CSSU71zEnrVyJ0fAau1HfzR8g/edit?usp=sharing)
