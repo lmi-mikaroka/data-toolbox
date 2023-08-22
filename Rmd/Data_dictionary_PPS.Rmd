@@ -4,6 +4,7 @@ author: "Herinomena Andriamasinoro, Julien Barde"
 date: "`r Sys.Date()`"
 output:
   html_document:
+    keep_md: true
     toc: true
     theme: united
     number_sections: true
