@@ -1,7 +1,7 @@
 ---
 title: "data_dictionary_PPS"
 author: "Herinomena Andriamasinoro, Julien Barde"
-date: "2023-06-12"
+date: "2023-08-22"
 output:
   html_document:
     keep_md: true
@@ -75,6 +75,10 @@ Here is the list and definition of tables in the data
   <tr>
    <td style="text-align:left;"> Lmaturity_fishbase </td>
    <td style="text-align:left;"> Informations concernants la stade de vie de PPS en se référence aux données de fishbase </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Nutrition </td>
+   <td style="text-align:left;"> Information sur les contenues nutritionelles des PPS </td>
   </tr>
 </tbody>
 </table>
@@ -726,6 +730,36 @@ Here is the list and definition of tables in the data
    <td style="text-align:left;"> Lmaturity_fishbase </td>
    <td style="text-align:left;"> Stade </td>
    <td style="text-align:left;"> Stade de vie d'un poisson </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Data_elements </td>
+   <td style="text-align:left;"> Sample </td>
+   <td style="text-align:left;"> Echantillon </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Data_elements </td>
+   <td style="text-align:left;"> Replicat </td>
+   <td style="text-align:left;"> Repétition d'un lot de 100g utilisé pour l'analyse nutrititionnelle </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Data_elements </td>
+   <td style="text-align:left;"> Element </td>
+   <td style="text-align:left;"> Différents éléments analysés(P, Zn, Na, Fe, Si, Ni, …) </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Data_elements </td>
+   <td style="text-align:left;"> Category </td>
+   <td style="text-align:left;"> Classification des éléments analysés (Macroélements, micronutriments, métaux lourds) </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Data_elements </td>
+   <td style="text-align:left;"> Unit </td>
+   <td style="text-align:left;"> Unité de valeurs pour la concentration des éléments </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> Data_elements </td>
+   <td style="text-align:left;"> Value </td>
+   <td style="text-align:left;"> Valeurs obténues pour chaque éléments après les analyses </td>
   </tr>
 </tbody>
 </table>
