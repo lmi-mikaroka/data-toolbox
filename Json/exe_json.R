@@ -7,7 +7,8 @@ library(dotenv)
 
 #######################
 
-setwd(Sys.getenv("WD"))
+load_dot_env(file = "C:/Users/Herinomena/Desktop/exemple_env/.env")
+Sys.getenv("wdir")
 
 load_dot_env(file = "C:/Users/Herinomena/Desktop/exemple_env/.env")
 

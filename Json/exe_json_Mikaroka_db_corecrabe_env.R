@@ -7,9 +7,9 @@ library(dotenv)
 
 #######################
 
-setwd(Sys.getenv("WD"))
 
 load_dot_env(file = "C:/Users/Herinomena/Desktop/exemple_env/.env")
+Sys.getenv("wdir")
 
 geoflow::initWorkflow("C:/Users/Herinomena/Desktop/exemple_env/Mikaroka_db_corecrabe_env.json")
 
