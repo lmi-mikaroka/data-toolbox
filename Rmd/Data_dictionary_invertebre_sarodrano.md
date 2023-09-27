@@ -1,7 +1,7 @@
 ---
 title: "Data dictionary invertebre sarodrano"
 author: "Herinomena Andriamasinoro, Julien bard"
-date: "2023-07-03"
+date: "2023-09-27"
 output:
   html_document:
     keep_md: true
@@ -46,15 +46,15 @@ Here is the list and definition of tables in the data
 <tbody>
   <tr>
    <td style="text-align:left;"> Habitat-Sarodrano_2022 </td>
-   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> Décrire les habitats où les gens du village effectuent leur pêche quotidiennement. Les données collectées comprennent le recouvrement benthique du milieu </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Suivi_Participatif_Sarodrano-2022 </td>
-   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> Concerne suivi des captures journalières des pêcheurs à pied est effectué sur 2 ans </td>
   </tr>
   <tr>
    <td style="text-align:left;"> Echantillonage_Sarodrano-2022 </td>
-   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> Concerne des comptages des taxons dans des BELT de 50 m2 sur les trois sites fréquentés par les pêcheurs à pied </td>
   </tr>
 </tbody>
 </table>
