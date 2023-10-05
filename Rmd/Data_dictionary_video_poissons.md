@@ -1,7 +1,7 @@
 ---
 title: "Data dictionary video poissons"
 author: "Herinomena Andriamasinoro, Julien bard"
-date: "2023-07-03"
+date: "2023-10-05"
 output: 
   html_document:
     keep_md: true
@@ -46,15 +46,15 @@ Here is the list and definition of tables in the data
 <tbody>
   <tr>
    <td style="text-align:left;"> SITES </td>
-   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> Ce sont les informations sur chaque site de suivi de poisson. Dans un site, on trouve son nom local et la nomination de la vidéo d'enregistrement selon les replicats ou trasnsect. Cet dernier a sa position géographique avec la description de sa profondeur et sa catégorie du récif. Et aussi l'information si on a trouvé des poissons ou pas dans la vidéo . </td>
   </tr>
   <tr>
    <td style="text-align:left;"> MINUTES </td>
-   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> C'est l'information sur chaque partie des vidéos d'enregistrement( nom et durée de la vidéo) . Elle est utile pour le montage du vrai durée d'enregistrement (15minutes). On se refère sur ces informations pour couper les parties inutiles de la vidéo sur ffmpeg. </td>
   </tr>
   <tr>
    <td style="text-align:left;"> DATA </td>
-   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> C'est l'annotation de la vidéo qu'on marque chaque temps où on trouve les individus de poisson avec leur classification taxonomique. </td>
   </tr>
 </tbody>
 </table>
@@ -118,6 +118,16 @@ Here is the list and definition of tables in the data
    <td style="text-align:left;"> profondeur sur chaque transect </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> SITES </td>
+   <td style="text-align:left;"> classe_recif </td>
+   <td style="text-align:left;"> catégorie du récif si c'est naturel ou artificiel </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> SITES </td>
+   <td style="text-align:left;"> poisson </td>
+   <td style="text-align:left;"> présence ou absence d'individu de poisson dans la video sur les transects </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> MINUTES </td>
    <td style="text-align:left;"> site </td>
    <td style="text-align:left;"> numéro de chaque site </td>
@@ -175,12 +185,12 @@ Here is the list and definition of tables in the data
   <tr>
    <td style="text-align:left;"> MINUTES </td>
    <td style="text-align:left;"> verification </td>
-   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> vérification du 15minute la durée de l'enregistrement </td>
   </tr>
   <tr>
    <td style="text-align:left;"> DATA </td>
    <td style="text-align:left;"> date </td>
-   <td style="text-align:left;"> NA </td>
+   <td style="text-align:left;"> date de prélevement de la vidéo sur chaque site </td>
   </tr>
   <tr>
    <td style="text-align:left;"> DATA </td>
@@ -220,22 +230,22 @@ Here is the list and definition of tables in the data
   <tr>
    <td style="text-align:left;"> DATA </td>
    <td style="text-align:left;"> nombre </td>
-   <td style="text-align:left;"> nombre de poisson sur le minute de pause </td>
+   <td style="text-align:left;"> nombre de poisson sur la minute de pause </td>
   </tr>
   <tr>
    <td style="text-align:left;"> DATA </td>
    <td style="text-align:left;"> famille </td>
-   <td style="text-align:left;"> famille de poisson sur le minute de pause </td>
+   <td style="text-align:left;"> famille de poisson sur la minute de pause </td>
   </tr>
   <tr>
    <td style="text-align:left;"> DATA </td>
    <td style="text-align:left;"> genre </td>
-   <td style="text-align:left;"> genre de poisson sur le minute de pause </td>
+   <td style="text-align:left;"> genre de poisson sur la minute de pause </td>
   </tr>
   <tr>
    <td style="text-align:left;"> DATA </td>
    <td style="text-align:left;"> genre_espece </td>
-   <td style="text-align:left;"> genre et espèces de poisson sur le minute de pause </td>
+   <td style="text-align:left;"> genre et espèces de poisson sur la minute de pause </td>
   </tr>
   <tr>
    <td style="text-align:left;"> DATA </td>
@@ -246,21 +256,6 @@ Here is the list and definition of tables in the data
    <td style="text-align:left;"> DATA </td>
    <td style="text-align:left;"> point_certitude </td>
    <td style="text-align:left;"> classé de 0 à 3 pour la vérification. 0 : impossible d’identifier ; 1 : n’est pas très sure 2 : plus ou moins sure ; 3 : sure </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> DATA </td>
-   <td style="text-align:left;"> visibilité </td>
-   <td style="text-align:left;"> détermination de la qualité d'image qui tient compte la turbidité et luminosité de l'eau. Classée en quatre : mauvaise ; moyenne; bonne; excellente </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> DATA </td>
-   <td style="text-align:left;"> habitat_substrat </td>
-   <td style="text-align:left;"> type de substrat et de fond </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> DATA </td>
-   <td style="text-align:left;"> profondeur </td>
-   <td style="text-align:left;"> profondeur sur chaque transect </td>
   </tr>
 </tbody>
 </table>
