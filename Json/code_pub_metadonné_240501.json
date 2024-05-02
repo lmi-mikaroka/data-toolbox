@@ -1,0 +1,113 @@
+{
+  "profile": {
+    "options": {
+      "line_separator": "_\n",
+      "skipFileDownload": true
+    },
+    "logos": ["https://mikaroka.ihsm.mg/wp-content/uploads/2024/04/Capture-decran-511.png"],
+    "organization": "LMI Mikaroka",
+    "project": "Composante Transversale",
+    "name": "LMI Mikaroka",
+    "mode": "entity",
+    "id": "Mikaroka_230804"
+  },
+  "metadata": {
+    "dictionary": [],
+    "entities": [
+      {
+        "handler": "gsheet",
+        "source": "https://docs.google.com/spreadsheets/d/13j0U6pNrO-3MaP-7y7OmpevgcdcxTwn0NVTCSyZWW4I/edit#gid=1204292361"
+      }
+    ],
+    "contacts": [
+      {
+        "handler": "gsheet",
+        "source": "https://docs.google.com/spreadsheets/d/19_B_1qNrqeLpEwGLJYkPMq8XB9JsC8HfSqfUE0AtaSo/edit#gid=0"
+      }
+    ]
+  },
+  "software": [
+    
+    {
+      "id": "my-geonetwork",
+      "type": "output",
+      "software_type": "geonetwork",
+      "parameters": {
+        "url": "https://geonetwork-sdi-lab.d4science.org/geonetwork",
+        "version": "3.0.2",
+        "user":"admin",
+        "pwd": "sdilab4you",
+        "logger": "DEBUG"
+      },
+      "properties": []
+    },
+    {
+      "id": "my-geoserver",
+      "type": "output",
+      "software_type": "geoserver",
+      "parameters": {
+        "url": "http://geoserver-sdi-lab.d4science.org/geoserver",
+        "user": "admin",
+        "pwd": "sdilab4you",
+        "logger": "DEBUG"
+      },
+      "properties": {
+        "workspace": "sdilab_geoflow",
+        "store": "G2OI"
+      }
+    },
+    {
+      "id": "Google drive",
+      "type": "input",
+      "software_type": "googledrive",
+      "parameters": {
+        "email": "a.herinomena11@gmail.com"
+       
+      },
+      "properties": []
+    }
+  ],
+  "actions": [
+    {
+      "id": "geometa-create-iso-19115",
+      "run": true,
+      "options": {
+        "use_uuid": false,
+        "doi": false,
+        "doi_thumbnail": false,
+        "inspire": false,
+        "logo": true,
+        "addfeatures": false,
+        "featureid": "zaho",
+        "subject_geography": "geography",
+        "include_service_identification": false,
+        "include_coverage_data_dimension_values": true,
+        "include_coverage_service_dimension_values": true
+      }
+    },
+    {
+      "id": "geonapi-publish-iso-19139",
+      "run": true,
+      "options": {
+        "geometa_inspire": false,
+        "privileges": [
+          "view",
+          "dynamic",
+          "featured"
+        ],
+        "group": "2",
+        "category": "datasets",
+        "publish_thumbnails": true
+      }
+    },
+    {
+      "id": "geosapi-publish-ogc-services",
+      "run": false,
+      "options": {
+        "createWorkspace": true,
+        "createStore": true
+      }
+    }
+  ],
+  "registers": []
+}
